@@ -46,7 +46,7 @@ For this project, you **don't** need to install Unity. Instead, choose the pre-b
 
 # Instructions
 
-To explore the environment and train the agent, start a jupyter notebook, open TrainAgent.ipynb and execute the steps. For more information, and an exmaple on how to use the agent, please check instructions inside the notebook.
+To explore the environment and train the agent, start a jupyter notebook, open Continous_Control.ipynb and execute the steps. For more information, and an exmaple on how to use the agent, please check instructions inside the notebook.
 
 ## Project structure
 
