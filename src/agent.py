@@ -1,7 +1,7 @@
 import numpy as np
 import random
 from src.replay_buffer import ReplayBuffer, NaivePrioritizedReplayBuffer
-from src.defaults import *
+from src.config import Config
 from src.model import Actor, Critic
 from src.noise import OUNoise
 
@@ -12,7 +12,7 @@ import torch.optim as optim
 class Agent():
     """Agent that interacts with and learns from the environment."""
 
-    def __init__(self, id, state_size, action_size, seed, use_prio=False, add_noise=True):
+    def __init__(self, id, state_size, action_size, config = Config()):
         """Initialize an Agent object.
         
         Params
@@ -20,46 +20,45 @@ class Agent():
             id (int): id used to identify the agent
             state_size (int): dimension of each state
             action_size (int): dimension of each action
-            seed (int): random seed
-            use_prio (boolean): Use Prioritized Experience Replay
-            add_noise (boolean): Add noise to the actions selected by the agent
+            config (Config): the agents configuration
         """
         self.state_size = state_size
         self.action_size = action_size
-        self.add_noise = add_noise
         self.id = id
 
-        self.use_prio = use_prio
-        self.seed = random.seed(seed)
+        self.config = config
+
+        random.seed(config.random_seed)
 
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
         # Actor & Target Network 
-        self.actor_local = Actor(state_size, action_size, seed).to(self.device)
-        self.actor_target = Actor(state_size, action_size, seed).to(self.device)
-        self.actor_optimizer = optim.Adam(self.actor_local.parameters(), lr=LR_ACTOR)
+        self.actor_local = Actor(state_size, action_size, config.random_seed, config.actor_hidden_units).to(self.device)
+        self.actor_target = Actor(state_size, action_size, config.random_seed, config.actor_hidden_units).to(self.device)
+        self.actor_optimizer = optim.Adam(self.actor_local.parameters(), lr=config.lr_actor)
 
         # Critic & Target Network
-        self.critic_local = Critic(state_size, action_size, seed).to(self.device)
-        self.critic_target = Critic(state_size, action_size, seed).to(self.device)
-        self.critic_optimizer = optim.Adam(self.critic_local.parameters(), lr=LR_CRITIC, weight_decay=WEIGHT_DECAY)
+        self.critic_local = Critic(state_size, action_size, config.random_seed, config.critic_hidden_units).to(self.device)
+        self.critic_target = Critic(state_size, action_size, config.random_seed, config.critic_hidden_units).to(self.device)
+        self.critic_optimizer = optim.Adam(self.critic_local.parameters(), lr=config.lr_critic, weight_decay=config.weight_decay)
 
         # Noise process
-        self.noise = OUNoise(action_size, seed)
+        self.noise = OUNoise(action_size, config.random_seed)
         
         # Replay memory
-        if use_prio:
-            self.memory = NaivePrioritizedReplayBuffer(action_size, BUFFER_SIZE, BATCH_SIZE, seed, PRIO_ALPHA, PRIO_EPSILON)
+        if config.use_per:
+            self.memory = NaivePrioritizedReplayBuffer(action_size, config.buffer_size, config.batch_size, config.random_seed, config.per_alpha,config.per_epsilon)
         else:
-            self.memory = ReplayBuffer(action_size, BUFFER_SIZE, BATCH_SIZE, seed)
+            self.memory = ReplayBuffer(action_size, config.buffer_size, config.batch_size, config.random_seed)
     
-    def step(self, state, action, reward, next_state, done, beta=PRIO_BETA):
+    def step(self, state, action, reward, next_state, done, beta=None):
         # Save experience in replay memory
         self.memory.add(state, action, reward, next_state, done)
 
         # If enough samples are available in memory, get random subset and learn
-        if len(self.memory) > BATCH_SIZE:
-            if self.use_prio:
+        if len(self.memory) > self.config.buffer_size:
+            if self.config.use_per:
+                assert(beta != None)
                 experiences, weights = self.memory.sample(beta)
                 states = torch.from_numpy(np.vstack([e.state for e in experiences if e is not None])).float().to(self.device)
                 actions = torch.from_numpy(np.vstack([e.action for e in experiences if e is not None])).float().to(self.device)
@@ -69,7 +68,7 @@ class Agent():
                 weights = torch.from_numpy(np.vstack(weights)).float().to(self.device)
 
                 experiences = (states, actions, rewards, next_states, dones)
-                self.learn(experiences, GAMMA, weights)
+                self.learn(experiences, self.config.gamma, weights)
             else:
                 experiences = self.memory.sample()
 
@@ -80,7 +79,7 @@ class Agent():
                 dones = torch.from_numpy(np.vstack([e.done for e in experiences if e is not None]).astype(np.uint8)).float().to(self.device)
 
                 experiences = (states, actions, rewards, next_states, dones)
-                self.learn(experiences, GAMMA)
+                self.learn(experiences, self.config.gamma)
 
 
     def act(self, state):
@@ -90,7 +89,7 @@ class Agent():
         with torch.no_grad():
             action = self.actor_local(state).cpu().data.numpy()
         self.actor_local.train()
-        if self.add_noise:
+        if self.config.add_noise:
             action += self.noise.sample()
         return np.clip(action, -1, 1)
 
@@ -122,7 +121,7 @@ class Agent():
         # Compute critic loss
         Q_expected = self.critic_local(states, actions)
 
-        if self.use_prio:
+        if self.config.use_per:
             td_error = Q_expected - Q_targets
             critic_loss = (td_error) ** 2
                 
@@ -149,8 +148,8 @@ class Agent():
         self.actor_optimizer.step()
 
         # ------------------- update target networks ------------------- #
-        self.soft_update(self.critic_local, self.critic_target, TAU)
-        self.soft_update(self.actor_local, self.actor_target, TAU)                    
+        self.soft_update(self.critic_local, self.critic_target, self.config.tau)
+        self.soft_update(self.actor_local, self.actor_target, self.config.tau)                    
 
     def soft_update(self, local_model, target_model, tau):
         """Soft update model parameters.
@@ -171,9 +170,9 @@ class Agent():
 
     def summary(self):
         """ Return a brief summary of the agent"""
-        s = 'DDPG Agent {}: PER: {} \n'.format(self.id, self.use_prio)
+        s = 'DDPG Agent {}:\n'.format(self.id)
+        s += self.config.__str__()
         s += self.actor_local.__str__()
         s += self.critic_local.__str__()
-        s += '\nMemory size: {} \nBatch size: {}\nGamma: {}\nLR Actor: {}\nLR Critic: {}\nWEIGHT_DECAY: {}\nTau: {}\n'.format(BUFFER_SIZE, BATCH_SIZE, GAMMA, LR_ACTOR, LR_CRITIC, WEIGHT_DECAY, TAU)
         return s
 
