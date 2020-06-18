@@ -26,6 +26,8 @@ class Agent():
         self.action_size = action_size
         self.id = id
 
+        self.t_step = 0
+
         self.config = config
 
         random.seed(config.random_seed)
@@ -43,7 +45,7 @@ class Agent():
         self.critic_optimizer = optim.Adam(self.critic_local.parameters(), lr=config.lr_critic, weight_decay=config.weight_decay)
 
         # Noise process
-        self.noise = OUNoise(action_size, config.random_seed)
+        self.noise = OUNoise(action_size, config.random_seed, config.noise_mu, config.noise_theta, config.noise_sigma)
         
         # Replay memory
         if config.use_per:
@@ -54,6 +56,11 @@ class Agent():
     def step(self, state, action, reward, next_state, done, beta=None):
         # Save experience in replay memory
         self.memory.add(state, action, reward, next_state, done)
+
+        # Learn every n time steps.
+        self.t_step = (self.t_step + 1) % self.config.update_n_step
+        if self.t_step != 0:
+            return
 
         # If enough samples are available in memory, get random subset and learn
         if len(self.memory) > self.config.buffer_size:
