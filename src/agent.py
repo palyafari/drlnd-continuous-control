@@ -63,7 +63,7 @@ class Agent():
             return
 
         # If enough samples are available in memory, get random subset and learn
-        if len(self.memory) > self.config.buffer_size:
+        if len(self.memory) > self.config.batch_size:
             if self.config.use_per:
                 assert(beta != None)
                 experiences, weights = self.memory.sample(beta)
@@ -142,6 +142,7 @@ class Agent():
 
         # Minimize the loss
         self.critic_optimizer.zero_grad()
+        torch.nn.utils.clip_grad_norm_(self.critic_local.parameters(), 1)
         critic_loss.backward()
         self.critic_optimizer.step()
 
