@@ -29,6 +29,8 @@ To run the code in this project, the specified environment of Udacity is needed.
 ## Step 1 - Getting started
 Install PyTorch, the ML-Agents toolkit, and a few more Python packages according to the [instructions in the DRLND GitHub repository](https://github.com/udacity/deep-reinforcement-learning#dependencies).
 
+Furthermore, install the [dataclasses](https://docs.python.org/3/library/dataclasses.html) python module.
+
 ## Step 2 - Download the Unity Environment
 For this project, you **don't** need to install Unity. Instead, choose the pre-built environmen provided by Udacity matching your operating system:
 
