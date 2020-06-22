@@ -12,9 +12,9 @@ class Config:
     lr_critic:float = 1e-3          # learning rate of the critic
     weight_decay:float = 0          # L2 weight decay
 
-    random_seed:int = 42
+    random_seed:int = 50
 
-    update_n_step:int = 16
+    update_n_step:int = 4
 
     actor_hidden_units:List = field(default_factory=lambda: [128,128])
     critic_hidden_units:List = field(default_factory=lambda: [128,128])
@@ -30,3 +30,6 @@ class Config:
     per_alpha:float = 0.6
     per_beta:float = 0.4
     per_epsilon:float = 1e-5
+
+    # ---- batchnorm ---- #
+    use_bn:bool = False

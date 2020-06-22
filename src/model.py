@@ -11,7 +11,7 @@ def hidden_init(layer):
 class Actor(nn.Module):
     """Actor (Policy) Model."""
 
-    def __init__(self, state_size, action_size, seed, hidden_units=[128,128]):
+    def __init__(self, state_size, action_size, seed, hidden_units=[128,128], use_bn=False):
         """Initialize parameters and build model.
         Params
         ======
@@ -23,6 +23,9 @@ class Actor(nn.Module):
         super(Actor, self).__init__()
         self.seed = torch.manual_seed(seed)
 
+        self.use_bn = use_bn
+        if use_bn:
+            self.bn = nn.BatchNorm1d(hidden_units[0])
         self.layers = []
         for i in range(len(hidden_units)):
             if i == 0:
@@ -40,9 +43,13 @@ class Actor(nn.Module):
 
     def forward(self, state):
         """Build an actor (policy) network that maps states -> actions."""
+        if self.use_bn and state.dim() == 1:
+            state = torch.unsqueeze(state,0)
         x = state
         for i in range(len(self.layers)-1):
             x = F.relu(self.layers[i](x))
+            if self.use_bn and i== 0:
+                x = self.bn(x)
 
         return F.tanh(self.layers[-1](x))
 
@@ -50,7 +57,7 @@ class Actor(nn.Module):
 class Critic(nn.Module):
     """Critic (Value) Model."""
 
-    def __init__(self, state_size, action_size, seed, hidden_units=[128,128]):
+    def __init__(self, state_size, action_size, seed, hidden_units=[128,128], use_bn=False):
         """Initialize parameters and build model.
         Params
         ======
@@ -62,6 +69,10 @@ class Critic(nn.Module):
         """
         super(Critic, self).__init__()
         self.seed = torch.manual_seed(seed)
+
+        self.use_bn = use_bn
+        if use_bn:
+            self.bn = nn.BatchNorm1d(hidden_units[0])
         self.layers = []
         for i in range(len(hidden_units)-1):
             if i == 0:
@@ -80,10 +91,13 @@ class Critic(nn.Module):
 
     def forward(self, state, action):
         """Build a critic (value) network that maps (state, action) pairs -> Q-values."""
-
+        if self.use_bn and state.dim() == 1:
+            state = torch.unsqueeze(state,0)
         x = state
         for i in range(len(self.layers)-2):
             x = F.relu(self.layers[i](x))
+            if self.use_bn and i == 0:
+                x = self.bn(x)
 
         x = torch.cat((x, action), dim=1)
         x = F.relu(self.layers[-2](x))

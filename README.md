@@ -50,8 +50,18 @@ To explore the environment and train the agent, start a jupyter notebook, open C
 
 ## Project structure
 
+* `Continouos_Control.ipynb`: the jupyter notebook for executing the training
+* `src\agent.py` : the implementation of the Agent
+* `src\model.py` : the PyTorch models of the neural networks used by the Agent
+* `src\replay_buffer.py` : The replay buffer implmentation for memory
+* `src\config.py` : the default configuration/hyperparameters of the models
+* `src\noise.py`  : the implementation of the Ornstein-Uhlenbeck process
+
 
 # Results
+
+The trained agent solved the environment in 97 episodes.
+For a detailed explanation, please read the [project report](./Report.md)
 
 
 # Notes

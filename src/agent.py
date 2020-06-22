@@ -35,13 +35,13 @@ class Agent():
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
         # Actor & Target Network 
-        self.actor_local = Actor(state_size, action_size, config.random_seed, config.actor_hidden_units).to(self.device)
-        self.actor_target = Actor(state_size, action_size, config.random_seed, config.actor_hidden_units).to(self.device)
+        self.actor_local = Actor(state_size, action_size, config.random_seed, config.actor_hidden_units, config.use_bn).to(self.device)
+        self.actor_target = Actor(state_size, action_size, config.random_seed, config.actor_hidden_units, config.use_bn).to(self.device)
         self.actor_optimizer = optim.Adam(self.actor_local.parameters(), lr=config.lr_actor)
 
         # Critic & Target Network
-        self.critic_local = Critic(state_size, action_size, config.random_seed, config.critic_hidden_units).to(self.device)
-        self.critic_target = Critic(state_size, action_size, config.random_seed, config.critic_hidden_units).to(self.device)
+        self.critic_local = Critic(state_size, action_size, config.random_seed, config.critic_hidden_units, config.use_bn).to(self.device)
+        self.critic_target = Critic(state_size, action_size, config.random_seed, config.critic_hidden_units, config.use_bn).to(self.device)
         self.critic_optimizer = optim.Adam(self.critic_local.parameters(), lr=config.lr_critic, weight_decay=config.weight_decay)
 
         # Noise process
