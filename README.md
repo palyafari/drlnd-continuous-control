@@ -62,7 +62,7 @@ To explore the environment and train the agent, start a jupyter notebook, open C
 
 # Results
 
-The trained agent solved the environment in 97 episodes.
+The trained agent solved the environment in 86 episodes.
 For a detailed explanation, please read the [project report](./Report.md)
 
 

@@ -26,13 +26,13 @@ The idea of [PER](https://arxiv.org/abs/1511.05952) is to prioritize experiences
 
 # Results
 
-The agent solves the environment in 43 episodes. 
+The agent solves the environment in 86 episodes. 
 Although I did not do an extensive hyperparameter tuding, I tested multiple network structures with 2-3 hidden layers containing 32-400 units each. I found that - similar to the DDPG paper - the net structure with 2 hidden layers (300 and 400 units) worked best. Using batch normalization and implementing prioritized experience replay led to a faster training.
 
 
 ## Scores
 The following plot shows the scores together with the moving average with a window size of 50:
-![scores](./img/scores.png)
+![scores](./results/scores.png)
 ## Hyperparameters
 The hyperparamters used by the agent are listed in the following table:
 
@@ -51,8 +51,8 @@ For a more detailed parameter list see `src\config.py`.
 
 
 ## Trained Model
-The trained actor model is in [this file](./actor.pth).
-The trained critic model is in [this file](./critic.pth).
+The trained actor model is in [this file](./results/actor.pth).
+The trained critic model is in [this file](./results/critic.pth).
 
 # Ideas for Future Work
 **Experiment with different network structure**: The current network structure is just an example. I experimented with a few other ones, and selected the one that worked "the best" but further experiments could definitely lead to better performing structures.
